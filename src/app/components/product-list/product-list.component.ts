@@ -13,8 +13,16 @@ export class ProductListComponent implements OnInit {
 
   products: Product[];
   currentCategoryId: number;
+  previousCategoryId: number;
   productCategory: ProductCategory;
   searchMode: boolean;
+
+  //pagination
+  pageNumber: number = 1;
+  pageSize: number = 5;
+  totalElements: number = 0;
+
+  previousKeyword: string = null;
 
   constructor(private productListService: ProductService, private route: ActivatedRoute) { }
 
@@ -35,15 +43,24 @@ export class ProductListComponent implements OnInit {
     }
   }
 
-  handleSearchProducts(){
-    
+  handleSearchProducts() {
+
     const theKeyword: string = this.route.snapshot.paramMap.get('keyword');
-    
-    this.productListService.searchProducts(theKeyword).subscribe(
-      data => this.products = data
-    )
-  
-  
+
+    //pagination condition
+    if(this.previousKeyword !=null){
+      this.pageNumber = 1;
+    }
+
+    this.previousKeyword = theKeyword;
+
+    console.log(`${theKeyword} and ${this.pageNumber}`);
+
+    this.productListService.searchProductsPaginate(this.pageNumber-1, this.pageSize,theKeyword).subscribe(
+      this.processResult()
+      )
+
+
   }
 
   handleListProducts() {
@@ -58,15 +75,40 @@ export class ProductListComponent implements OnInit {
       this.currentCategoryId = 1;
     }
 
-    this.productListService.getProductList(this.currentCategoryId).subscribe(
-      data => this.products = data
+    //Check if we have a different category than previous (pagination)
+    if (this.previousCategoryId != this.currentCategoryId) {
+      this.pageNumber = 1;
+    }
+
+    this.previousCategoryId = this.currentCategoryId;
+
+    console.log(`currentCategoryId= ${this.currentCategoryId}, pageNumber=${this.pageNumber}`)
+
+    this.productListService.getProductListPaginate(this.pageNumber - 1, this.pageSize, this.currentCategoryId).subscribe(
+      this.processResult()
     )
 
     //getting category name
-    this.productListService.getProductCategoryName(this.currentCategoryId).subscribe(
-      data => this.productCategory = data
-    )
+    //this.productListService.getProductCategoryName(this.currentCategoryId).subscribe(
+    //  data => this.productCategory = data
+    //)
 
+  }
+
+  processResult() {
+
+    return data => {
+      this.products = data._embedded.products;
+      this.pageNumber = data.page.number + 1;
+      this.pageSize = data.page.size;
+      this.totalElements = data.page.totalElements;
+    }
+  }
+
+  updatePageSize(selectedPageSize: number){
+    this.pageSize = selectedPageSize;
+    this.pageNumber = 1;
+    this.listProducts();
   }
 
 }
