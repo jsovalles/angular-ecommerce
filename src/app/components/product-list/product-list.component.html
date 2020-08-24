@@ -14,7 +14,7 @@
                             <h1>{{product.name}}</h1>
                         </a>
                         <div class="price"> {{product.unitPrice | currency:'COL'}}</div>
-                        <a href="#" class="primary-btn">Add to cart</a>
+                        <a (click)="addToCart(product)" class="btn btn-primary btn-small">Add to cart</a>
                     </div>
                 </div>
                 <!-- if products are not found then we display a message-->
